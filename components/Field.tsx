@@ -2,6 +2,8 @@
 
 import { useId } from "react";
 
+import { applyAmountInput } from "@/lib/format";
+
 /**
  * A labelled money input.
  *
@@ -51,7 +53,10 @@ export function Field({
         <input
           id={id}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          // Written straight to the element as well as up to the parent (see
+          // applyAmountInput): when the grouped text equals the old state, React
+          // would not touch the DOM and the raw keystroke would stay visible.
+          onChange={(e) => applyAmountInput(e.target, onChange)}
           aria-describedby={hint ? hintId : undefined}
           // `inputMode` rather than `type="number"`: a number input brings up
           // a spinner nobody wants on mobile and silently rejects pasted
