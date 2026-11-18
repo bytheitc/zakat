@@ -117,6 +117,40 @@ export function computeZakat(input: ZakatInput): ZakatResult {
 }
 
 /**
+ * Round-up steps offered per home currency. These are a convenience, not a
+ * ruling: what a "round" figure feels like depends on how big the currency's
+ * unit is, so the list is a judgement about size only. Currencies not listed
+ * get ROUND_UP_STEPS_DEFAULT.
+ */
+export const ROUND_UP_STEPS_DEFAULT: readonly number[] = [10];
+export const ROUND_UP_STEPS: Readonly<Record<string, readonly number[]>> = {
+  NGN: [100, 1000],
+  PKR: [100, 1000],
+  INR: [100, 1000],
+  BDT: [100, 1000],
+  KES: [100, 1000],
+  XOF: [100, 1000],
+  IDR: [1000, 10000],
+};
+
+export function roundUpSteps(currency: string): readonly number[] {
+  return ROUND_UP_STEPS[currency.toUpperCase()] ?? ROUND_UP_STEPS_DEFAULT;
+}
+
+/**
+ * Round an amount UP to the next multiple of `step`. It is only ever offered
+ * as giving more than calculated, so the result is never below the input:
+ * zero, negatives and a step that makes no sense come back unchanged.
+ */
+export function roundUpTo(amount: number, step: number): number {
+  if (!(amount > 0) || !(step > 0) || !Number.isFinite(amount) || !Number.isFinite(step)) return amount;
+  let rounded = Math.ceil(amount / step) * step;
+  // Floating-point division can land a hair under the true quotient.
+  if (rounded < amount) rounded += step;
+  return rounded;
+}
+
+/**
  * Zakat al-Fitr, paid per person before the Eid prayer. It is measured in
  * food — one sa', about 2.5kg of the local staple — not in money, so the
  * calculation takes a price per kilo and shows both figures. Which staple,
