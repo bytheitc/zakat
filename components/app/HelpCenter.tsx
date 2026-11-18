@@ -1,16 +1,17 @@
 "use client";
 
-import { BookOpen, CalendarClock, CircleHelp, Coins, FileSpreadsheet, Globe, Lock, ReceiptText, Scale } from "lucide-react";
+import { BookOpen, CalendarClock, CircleHelp, Coins, FileSpreadsheet, Gem, Globe, Lock, ReceiptText, Scale } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { NISAB_GOLD_GRAMS, NISAB_SILVER_GRAMS } from "@/lib/zakat";
 
-export type HelpTopic = "start" | "nisab" | "hawl" | "debts" | "solar" | "imports" | "currency" | "fitr" | "privacy";
+export type HelpTopic = "start" | "nisab" | "hawl" | "debts" | "jewellery" | "solar" | "imports" | "currency" | "fitr" | "privacy";
 
 const TOPICS: { id: HelpTopic; label: string; icon: React.ReactNode }[] = [
   { id: "start", label: "Getting started", icon: <BookOpen /> },
   { id: "nisab", label: "The threshold (nisab)", icon: <Scale /> },
   { id: "hawl", label: "The zakat year (hawl)", icon: <CalendarClock /> },
   { id: "debts", label: "Which debts come off", icon: <ReceiptText /> },
+  { id: "jewellery", label: "Gold and silver jewellery", icon: <Gem /> },
   { id: "solar", label: "2.5% or 2.577%", icon: <CircleHelp /> },
   { id: "imports", label: "Importing statements", icon: <FileSpreadsheet /> },
   { id: "currency", label: "Dollars, crypto, gold", icon: <Globe /> },
@@ -68,6 +69,14 @@ function Topic({ id }: { id: HelpTopic }) {
         <h3>Which debts come off</h3>
         <p>Only <strong>debts due now</strong>: this month&apos;s repayment, bills you owe, money you must hand back soon.</p>
         <p>Not the whole of a long-term loan such as a mortgage or student loan. Subtracting all of it would wipe out zakat that is genuinely owed.</p>
+      </>);
+    case "jewellery":
+      return (<>
+        <h3>Gold and silver jewellery</h3>
+        <p>Gold and silver held as savings or investment are entered with your other wealth. For jewellery kept for personal adornment and worn regularly, scholars differ:</p>
+        <p>The Hanafi view counts the jewellery. The majority view (Maliki, Shafi'i and Hanbali) generally exempts permissible personal-use jewellery. The scope of that exemption can depend on how the jewellery is used and what is customary.</p>
+        <p>Choose the view you follow. This calculator presents both positions and does not issue a religious ruling. Ask a scholar you trust if you are unsure.</p>
+        <p>Sources: <a className="font-semibold text-[var(--color-brand)] underline underline-offset-2" href="https://www.dar-alifta.org/en/fatwa/details/7733/paying-zakat-on-jewelry" target="_blank" rel="noreferrer">Egypt&apos;s Dar al-Ifta</a> and <a className="font-semibold text-[var(--color-brand)] underline underline-offset-2" href="https://islamqa.org/hanafi/islamicportal/118223/zakah-on-jewellery/" target="_blank" rel="noreferrer">a Hanafi fatwa from IslamicPortal</a>.</p>
       </>);
     case "solar":
       return (<>

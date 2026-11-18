@@ -13,11 +13,12 @@ import {
 } from "./zakat";
 
 const input = (over: Partial<ZakatInput> = {}): ZakatInput => ({
-  assets: { cash: 0, savings: 0, preciousMetals: 0, receivables: 0, tradeGoods: 0 },
+  assets: { cash: 0, savings: 0, preciousMetals: 0, regularJewellery: 0, receivables: 0, tradeGoods: 0 },
   liabilities: { immediateDebts: 0 },
   nisabBasis: "silver",
   goldPricePerGram: 150_000,
   silverPricePerGram: 1_800,
+  jewelleryWornTreatment: "majority",
   ...over,
 });
 
@@ -50,6 +51,36 @@ describe("computeZakat", () => {
       })
     );
     expect(result.totalAssets).toBe(1500);
+  });
+
+  it("counts regularly worn jewellery when the Hanafi view is selected", () => {
+    const result = computeZakat(input({
+      assets: { cash: 0, savings: 0, preciousMetals: 25_000, regularJewellery: 300_000, receivables: 0, tradeGoods: 0 },
+      jewelleryWornTreatment: "hanafi",
+    }));
+
+    expect(result.totalAssets).toBe(325_000);
+    expect(result.regularJewelleryCounted).toBe(300_000);
+  });
+
+  it("excludes regularly worn jewellery when the majority view is selected", () => {
+    const result = computeZakat(input({
+      assets: { cash: 0, savings: 0, preciousMetals: 25_000, regularJewellery: 300_000, receivables: 0, tradeGoods: 0 },
+      jewelleryWornTreatment: "majority",
+    }));
+
+    expect(result.totalAssets).toBe(25_000);
+    expect(result.regularJewelleryCounted).toBe(0);
+  });
+
+  it("does not count regularly worn jewellery before a view is selected", () => {
+    const result = computeZakat(input({
+      assets: { cash: 0, savings: 0, preciousMetals: 25_000, regularJewellery: 300_000, receivables: 0, tradeGoods: 0 },
+      jewelleryWornTreatment: undefined,
+    }));
+
+    expect(result.totalAssets).toBe(25_000);
+    expect(result.regularJewelleryCounted).toBe(0);
   });
 
   it("deducts debts due now", () => {

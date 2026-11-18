@@ -74,10 +74,11 @@ export interface Aggregation {
   readonly warnings: readonly string[];
 }
 
-const EMPTY_ASSETS: Assets = {
+const EMPTY_ASSETS: Record<AssetCategory, number> = {
   cash: 0,
   savings: 0,
   preciousMetals: 0,
+  regularJewellery: 0,
   receivables: 0,
   tradeGoods: 0,
 };
@@ -143,6 +144,7 @@ export function aggregate(
       cash: perCategory.cash,
       savings: perCategory.savings,
       preciousMetals: perCategory.preciousMetals,
+      regularJewellery: perCategory.regularJewellery,
       receivables: perCategory.receivables,
       tradeGoods: perCategory.tradeGoods,
     },
