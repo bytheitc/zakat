@@ -9,6 +9,8 @@ import {
   computeZakat,
   formatNaira,
   nisabValue,
+  roundUpSteps,
+  roundUpTo,
   zakatAlFitr,
 } from "./zakat";
 
@@ -152,5 +154,53 @@ describe("formatNaira", () => {
     const formatted = formatNaira(1_234_567.89);
     expect(formatted).toContain("1,234,568");
     expect(formatted).not.toContain(".");
+  });
+});
+
+describe("roundUpTo", () => {
+  it("rounds 32,487 up to 32,500 in steps of 100 and 33,000 in steps of 1,000", () => {
+    expect(roundUpTo(32_487, 100)).toBe(32_500);
+    expect(roundUpTo(32_487, 1_000)).toBe(33_000);
+  });
+
+  it("rounds a pound figure up to the next 10", () => {
+    expect(roundUpTo(412.3, 10)).toBe(420);
+  });
+
+  it("leaves an amount already on a step alone", () => {
+    expect(roundUpTo(32_500, 100)).toBe(32_500);
+  });
+
+  it("never goes down, across many amounts and steps", () => {
+    for (const step of [10, 100, 1_000, 10_000]) {
+      for (let i = 0; i < 2_000; i++) {
+        const amount = i * 37.31 + 0.01;
+        const rounded = roundUpTo(amount, step);
+        expect(rounded).toBeGreaterThanOrEqual(amount);
+        expect(rounded - amount).toBeLessThan(step);
+        expect(rounded % step).toBe(0);
+      }
+    }
+  });
+
+  it("returns zero, negatives and a bad step unchanged", () => {
+    expect(roundUpTo(0, 100)).toBe(0);
+    expect(roundUpTo(-50, 100)).toBe(-50);
+    expect(roundUpTo(250, 0)).toBe(250);
+  });
+});
+
+describe("roundUpSteps", () => {
+  it("offers 100 and 1,000 for naira", () => {
+    expect(roundUpSteps("NGN")).toEqual([100, 1_000]);
+  });
+
+  it("offers 10 for pounds, and for currencies with no special entry", () => {
+    expect(roundUpSteps("GBP")).toEqual([10]);
+    expect(roundUpSteps("XYZ")).toEqual([10]);
+  });
+
+  it("is case-insensitive", () => {
+    expect(roundUpSteps("ngn")).toEqual([100, 1_000]);
   });
 });

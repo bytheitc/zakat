@@ -22,6 +22,8 @@ import {
   SAA_KILOGRAMS,
   type NisabBasis,
   computeZakat,
+  roundUpSteps,
+  roundUpTo,
   formatIn,
   zakatAlFitr,
 } from "@/lib/zakat";
@@ -168,6 +170,8 @@ function WealthCalculator({ help, currency, symbol }: { help: (t: HelpTopic) => 
   const [goldPrice, setGoldPrice] = usePersistentState("wealth:goldPrice", "");
   const [silverPrice, setSilverPrice] = usePersistentState("wealth:silverPrice", "");
   const [solarYear, setSolarYear] = usePersistentState("wealth:solarYear", false);
+  const [roundUp, setRoundUp] = usePersistentState("wealth:roundUp", false);
+  const [roundStep, setRoundStep] = usePersistentState("wealth:roundUpStep", 0);
 
   // Typed figures become sources like everything else, so the totals, the
   // working and the warnings have exactly one code path.
@@ -311,7 +315,7 @@ function WealthCalculator({ help, currency, symbol }: { help: (t: HelpTopic) => 
         </div>
       </div>
 
-      <ResultPanel priced={priced} hasHoldings={hasHoldings} basis={basis} result={result} totals={totals} onHelp={help} fmt={fmt} currency={currency} />
+      <ResultPanel roundUp={roundUp} setRoundUp={setRoundUp} roundStep={roundStep} setRoundStep={setRoundStep} priced={priced} hasHoldings={hasHoldings} basis={basis} result={result} totals={totals} onHelp={help} fmt={fmt} currency={currency} />
     </div>
   );
 }
@@ -342,6 +346,10 @@ function Step({ n, title, subtitle, status, onHelp, children }: { n: number; tit
 }
 
 function ResultPanel({
+  roundUp,
+  setRoundUp,
+  roundStep,
+  setRoundStep,
   priced,
   hasHoldings,
   basis,
@@ -351,6 +359,10 @@ function ResultPanel({
   fmt,
   currency,
 }: {
+  roundUp: boolean;
+  setRoundUp: (v: boolean) => void;
+  roundStep: number;
+  setRoundStep: (v: number) => void;
   fmt: (n: number) => string;
   currency: string;
   priced: boolean;
@@ -365,6 +377,10 @@ function ResultPanel({
   const [saved, setSaved] = useState(false);
   const groups = groupByCategory(totals.lines);
   const weakest = weakestConfidence(totals.lines);
+  const steps = roundUpSteps(currency);
+  // A saved step from another currency is ignored rather than trusted.
+  const step = steps.includes(roundStep) ? roundStep : steps[0];
+  const roundedUp = result.meetsNisab && roundUp ? roundUpTo(result.zakatDue, step) : result.zakatDue;
   const ratio = result.nisabValue > 0 ? result.netWealth / result.nisabValue : 0;
 
   function save() {
@@ -416,6 +432,43 @@ function ResultPanel({
                   <AnimatedNumber value={result.zakatDue} format={fmt} />
                 </p>
                 </div>
+                {result.meetsNisab && (
+                  <div className="mt-4 rounded-xl border border-[var(--color-rule)] p-3.5 text-sm">
+                    <label className="flex cursor-pointer items-start gap-3">
+                      <input type="checkbox" checked={roundUp} onChange={(e) => setRoundUp(e.target.checked)} className="mt-0.5 size-4 accent-[var(--color-brand)]" />
+                      <span>
+                        <span className="font-semibold">Give a little more: round up</span>
+                        <span className="block text-[var(--color-ink-soft)]">Optional. This is giving more than the calculated amount, never less.</span>
+                      </span>
+                    </label>
+                    {roundUp && (
+                      <>
+                        {steps.length > 1 && (
+                          <div className="mt-3 flex items-center gap-2">
+                            <label htmlFor="round-step" className="text-[var(--color-ink-soft)]">Round up to the next</label>
+                            <select id="round-step" value={step} onChange={(e) => setRoundStep(Number(e.target.value))} className="rounded-lg border border-[var(--color-rule)] bg-transparent px-2 py-1 font-mono-nums">
+                              {steps.map((s) => <option key={s} value={s}>{fmt(s)}</option>)}
+                            </select>
+                          </div>
+                        )}
+                        <dl className="mt-3 space-y-1">
+                          <div className="flex justify-between gap-4">
+                            <dt className="text-[var(--color-ink-soft)]">Calculated</dt>
+                            <dd className="font-mono-nums">{fmt(result.zakatDue)}</dd>
+                          </div>
+                          <div className="flex justify-between gap-4 font-semibold">
+                            <dt>Rounded up to the next {fmt(step)}</dt>
+                            <dd className="font-mono-nums">{fmt(roundedUp)}</dd>
+                          </div>
+                          <div className="flex justify-between gap-4 text-[var(--color-ink-soft)]">
+                            <dt>Extra you would give</dt>
+                            <dd className="font-mono-nums">{fmt(roundedUp - result.zakatDue)}</dd>
+                          </div>
+                        </dl>
+                      </>
+                    )}
+                  </div>
+                )}
                 <p className="mt-4 text-sm text-[var(--color-ink-soft)]">
                   {result.meetsNisab
                     ? `${(result.rate * 100).toFixed(result.rate === 0.025 ? 1 : 3)}% of ${fmt(result.netWealth)}${!totals.complete ? ", so far" : ""}`
