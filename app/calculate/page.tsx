@@ -20,6 +20,7 @@ import {
   NISAB_GOLD_GRAMS,
   NISAB_SILVER_GRAMS,
   SAA_KILOGRAMS,
+  type JewelleryWornTreatment,
   type NisabBasis,
   computeZakat,
   formatIn,
@@ -160,6 +161,8 @@ function WealthCalculator({ help, currency, symbol }: { help: (t: HelpTopic) => 
   const [cash, setCash] = usePersistentState("wealth:cash", "");
   const [savings, setSavings] = usePersistentState("wealth:savings", "");
   const [metals, setMetals] = usePersistentState("wealth:metals", "");
+  const [regularJewellery, setRegularJewellery] = usePersistentState("wealth:regularJewellery", "");
+  const [jewelleryWornTreatment, setJewelleryWornTreatment] = usePersistentState<JewelleryWornTreatment | "">("wealth:jewelleryWornTreatment", "");
   const [receivables, setReceivables] = usePersistentState("wealth:receivables", "");
   const [tradeGoods, setTradeGoods] = usePersistentState("wealth:tradeGoods", "");
   const [debts, setDebts] = usePersistentState("wealth:debts", "");
@@ -172,10 +175,10 @@ function WealthCalculator({ help, currency, symbol }: { help: (t: HelpTopic) => 
   // Typed figures become sources like everything else, so the totals, the
   // working and the warnings have exactly one code path.
   const typed = useMemo(() => {
-    const entries: [AssetCategory, string][] = [["cash", cash], ["savings", savings], ["preciousMetals", metals], ["receivables", receivables], ["tradeGoods", tradeGoods]];
-    const built = entries.filter(([, v]) => num(v) !== 0).map(([c, v]) => manualSource(c, num(v), currency));
+    const entries: [AssetCategory, string, string?][] = [["cash", cash], ["savings", savings], ["preciousMetals", metals, "Gold and silver held as savings (entered by hand)"], ["regularJewellery", regularJewellery, `Regularly worn jewellery${jewelleryWornTreatment === "majority" ? " (excluded under the majority view)" : jewelleryWornTreatment === "hanafi" ? " (counted under the Hanafi view)" : " (choose whether to count)"}`], ["receivables", receivables], ["tradeGoods", tradeGoods]];
+    const built = entries.filter(([, v]) => num(v) !== 0).map(([c, v, label]) => manualSource(c, num(v), currency, label));
     return num(debts) !== 0 ? [...built, manualDebt(num(debts), currency)] : built;
-  }, [cash, savings, metals, receivables, tradeGoods, debts, currency]);
+  }, [cash, savings, metals, regularJewellery, jewelleryWornTreatment, receivables, tradeGoods, debts, currency]);
 
   const allSources = useMemo(() => [...sources, ...typed], [sources, typed]);
   const rates = useMemo(() => {
@@ -188,10 +191,12 @@ function WealthCalculator({ help, currency, symbol }: { help: (t: HelpTopic) => 
   const duplicates = useMemo(() => findDuplicates(allSources), [allSources]);
   const duplicateMessages = useMemo(() => new Map(duplicates.map((w) => [w.b, w.message])), [duplicates]);
 
-  const priced = basis === "gold" ? num(goldPrice) > 0 : num(silverPrice) > 0;
+  const jewelleryChoiceNeeded = num(regularJewellery) > 0 && jewelleryWornTreatment === "";
+  const thresholdPriced = basis === "gold" ? num(goldPrice) > 0 : num(silverPrice) > 0;
+  const priced = thresholdPriced && !jewelleryChoiceNeeded;
   const result = useMemo(
-    () => computeZakat({ assets: totals.assets, liabilities: { immediateDebts: totals.immediateDebts }, nisabBasis: basis, goldPricePerGram: num(goldPrice), silverPricePerGram: num(silverPrice), useSolarYearRate: solarYear }),
-    [totals, basis, goldPrice, silverPrice, solarYear]
+    () => computeZakat({ assets: totals.assets, liabilities: { immediateDebts: totals.immediateDebts }, nisabBasis: basis, goldPricePerGram: num(goldPrice), silverPricePerGram: num(silverPrice), useSolarYearRate: solarYear, jewelleryWornTreatment: jewelleryWornTreatment || undefined }),
+    [totals, basis, goldPrice, silverPrice, solarYear, jewelleryWornTreatment]
   );
 
   const imported = sources.length;
@@ -240,11 +245,30 @@ function WealthCalculator({ help, currency, symbol }: { help: (t: HelpTopic) => 
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Cash and current accounts" hint="In hand, in the bank, mobile money" prefix={symbol} value={cash} onChange={setCash} />
             <Field label="Savings" hint="Including money set aside for fees" prefix={symbol} value={savings} onChange={setSavings} />
-            <Field label="Gold and silver" hint="What it would sell for today" prefix={symbol} value={metals} onChange={setMetals} />
+            <Field label="Gold and silver held as savings" hint="Savings, investment, or jewellery not worn regularly" prefix={symbol} value={metals} onChange={setMetals} />
+            <Field label="Gold and silver jewellery worn regularly" hint="Enter its value separately, then choose whether to count it" prefix={symbol} value={regularJewellery} onChange={setRegularJewellery} />
             <Field label="Money owed to you" hint="Only what you expect back" prefix={symbol} value={receivables} onChange={setReceivables} />
             <Field label="Stock for resale" hint="If you run a business" prefix={symbol} value={tradeGoods} onChange={setTradeGoods} />
             <Field label="Debts due now" hint="Not a whole long-term loan" prefix={symbol} value={debts} onChange={setDebts} />
           </div>
+          <p className="mt-3 text-xs text-[var(--color-ink-soft)]">If your saved metals figure included regularly worn jewellery, move that amount into the separate jewellery field above.</p>
+          {num(regularJewellery) > 0 && (
+            <fieldset className="mt-4 rounded-2xl border border-[var(--color-rule)] p-4">
+              <legend className="px-1 text-sm font-semibold">How should regularly worn jewellery be treated?</legend>
+              <p className="mb-3 text-sm text-[var(--color-ink-soft)]">Scholars differ. Choose the view you follow; no result is shown until you choose.</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--color-rule)] p-3 text-sm">
+                  <input type="radio" name="jewellery-worn-treatment" value="hanafi" checked={jewelleryWornTreatment === "hanafi"} onChange={() => setJewelleryWornTreatment("hanafi")} className="mt-0.5 size-4 accent-[var(--color-brand)]" />
+                  <span><strong className="block">Count it — Hanafi view</strong><span className="text-[var(--color-ink-soft)]">Include the jewellery value.</span></span>
+                </label>
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--color-rule)] p-3 text-sm">
+                  <input type="radio" name="jewellery-worn-treatment" value="majority" checked={jewelleryWornTreatment === "majority"} onChange={() => setJewelleryWornTreatment("majority")} className="mt-0.5 size-4 accent-[var(--color-brand)]" />
+                  <span><strong className="block">Exclude it — majority view</strong><span className="text-[var(--color-ink-soft)]">Leave the jewellery out of the total.</span></span>
+                </label>
+              </div>
+              <button type="button" className="mt-3 text-sm font-semibold text-[var(--color-brand)] hover:underline" onClick={() => help("jewellery")}>Why are there two views?</button>
+            </fieldset>
+          )}
         </Step>
 
         {currencies.length > 0 && (
@@ -311,7 +335,7 @@ function WealthCalculator({ help, currency, symbol }: { help: (t: HelpTopic) => 
         </div>
       </div>
 
-      <ResultPanel priced={priced} hasHoldings={hasHoldings} basis={basis} result={result} totals={totals} onHelp={help} fmt={fmt} currency={currency} />
+      <ResultPanel priced={priced} jewelleryChoiceNeeded={jewelleryChoiceNeeded} jewelleryWornTreatment={jewelleryWornTreatment} hasHoldings={hasHoldings} basis={basis} result={result} totals={totals} onHelp={help} fmt={fmt} currency={currency} />
     </div>
   );
 }
@@ -343,6 +367,8 @@ function Step({ n, title, subtitle, status, onHelp, children }: { n: number; tit
 
 function ResultPanel({
   priced,
+  jewelleryChoiceNeeded,
+  jewelleryWornTreatment,
   hasHoldings,
   basis,
   result,
@@ -354,6 +380,8 @@ function ResultPanel({
   fmt: (n: number) => string;
   currency: string;
   priced: boolean;
+  jewelleryChoiceNeeded: boolean;
+  jewelleryWornTreatment: JewelleryWornTreatment | "";
   hasHoldings: boolean;
   basis: NisabBasis;
   result: ReturnType<typeof computeZakat>;
@@ -388,11 +416,11 @@ function ResultPanel({
             {!priced ? (
               <div className="py-4 text-center">
                 <Scale className="mx-auto size-10 text-[var(--color-ink-faint)]" />
-                <p className="mt-3 font-semibold">{hasHoldings ? `Add today's ${basis} price` : "Your result will appear here"}</p>
+                <p className="mt-3 font-semibold">{jewelleryChoiceNeeded ? "Choose how to treat regularly worn jewellery" : hasHoldings ? `Add today's ${basis} price` : "Your result will appear here"}</p>
                 <p className="mx-auto mt-1 max-w-xs text-sm text-[var(--color-ink-soft)]">
-                  {hasHoldings ? "Once the threshold is set, you'll see whether zakat is due and how much." : "Add what you hold, then set the threshold."}
+                  {jewelleryChoiceNeeded ? "Select the scholarly view you follow to see a result that includes your choice." : hasHoldings ? "Once the threshold is set, you'll see whether zakat is due and how much." : "Add what you hold, then set the threshold."}
                 </p>
-                {hasHoldings && (
+                {hasHoldings && !jewelleryChoiceNeeded && (
                   <p className="mt-4 rounded-xl bg-[var(--color-wash)] p-3 text-sm">
                     So far: <span className="font-mono-nums font-semibold">{fmt(result.netWealth)}</span> net
                   </p>
@@ -442,6 +470,13 @@ function ResultPanel({
                     </div>
                   ))}
                 </dl>
+
+                {result.regularJewelleryCounted > 0 && (
+                  <p className="mt-3 text-xs text-[var(--color-ink-soft)]">Includes regularly worn jewellery under the Hanafi view.</p>
+                )}
+                {jewelleryWornTreatment === "majority" && totals.assets.regularJewellery !== undefined && totals.assets.regularJewellery > 0 && (
+                  <p className="mt-3 text-xs text-[var(--color-ink-soft)]">Regularly worn jewellery is shown in the working but excluded from zakatable wealth under the majority view.</p>
+                )}
 
                 {groups.length > 0 && (
                   <details className="group mt-4 rounded-xl border border-[var(--color-rule)]">
@@ -498,7 +533,7 @@ function ResultPanel({
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[var(--color-rule)] bg-[var(--color-card)]/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md lg:hidden">
         <div className="mx-auto flex max-w-xl items-center justify-between gap-3">
           <div>
-            <p className="text-xs text-[var(--color-ink-soft)]">{!priced ? "Set the threshold to see" : result.meetsNisab ? "Zakat due" : "Below nisab"}</p>
+            <p className="text-xs text-[var(--color-ink-soft)]">{jewelleryChoiceNeeded ? "Choose jewellery view" : !priced ? "Set the threshold to see" : result.meetsNisab ? "Zakat due" : "Below nisab"}</p>
             <p className="font-mono-nums text-xl font-semibold">{priced ? fmt(result.zakatDue) : "—"}</p>
           </div>
           <a href="#result" className="btn btn-primary btn-sm">See result <ArrowDown className="size-4" /></a>

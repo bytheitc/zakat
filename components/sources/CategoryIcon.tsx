@@ -5,6 +5,7 @@ const ICONS: Readonly<Record<AssetCategory, typeof Banknote>> = {
   cash: Banknote,
   savings: PiggyBank,
   preciousMetals: Gem,
+  regularJewellery: Gem,
   receivables: HandCoins,
   tradeGoods: Package,
 };

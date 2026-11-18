@@ -34,14 +34,17 @@ export const NISAB_GOLD_GRAMS = 85;
 export const NISAB_SILVER_GRAMS = 595;
 
 export type NisabBasis = "gold" | "silver";
+export type JewelleryWornTreatment = "hanafi" | "majority";
 
 export interface Assets {
   /** Cash in hand, in current accounts, in mobile money. */
   readonly cash: number;
   /** Money in savings, including anything put aside for school fees. */
   readonly savings: number;
-  /** Market value of gold and silver owned, however it is held. */
+  /** Gold and silver held as savings or investment, plus any imported metals. */
   readonly preciousMetals: number;
+  /** Market value of gold and silver jewellery kept for regular personal wear. */
+  readonly regularJewellery?: number;
   /** Money owed to you that you genuinely expect back. Money you have
    *  written off is not an asset and should not be entered here. */
   readonly receivables: number;
@@ -63,6 +66,8 @@ export interface ZakatInput {
   readonly goldPricePerGram: number;
   readonly silverPricePerGram: number;
   readonly useSolarYearRate?: boolean;
+  /** No value means no jewellery view was selected, so worn jewellery is excluded. */
+  readonly jewelleryWornTreatment?: JewelleryWornTreatment;
 }
 
 export interface ZakatResult {
@@ -77,6 +82,8 @@ export interface ZakatResult {
   /** How far below the threshold, when it is not met. Students find this
    *  more useful than a bare "no": it answers "how close am I?". */
   readonly shortfall: number;
+  /** Amount of regularly worn jewellery included under the selected view. */
+  readonly regularJewelleryCounted: number;
 }
 
 export function nisabValue(input: ZakatInput): number {
@@ -87,13 +94,16 @@ export function nisabValue(input: ZakatInput): number {
 
 export function computeZakat(input: ZakatInput): ZakatResult {
   const { assets, liabilities } = input;
+  const regularJewelleryCounted =
+    input.jewelleryWornTreatment === "hanafi" ? assets.regularJewellery ?? 0 : 0;
 
   const totalAssets =
     assets.cash +
     assets.savings +
     assets.preciousMetals +
     assets.receivables +
-    assets.tradeGoods;
+    assets.tradeGoods +
+    regularJewelleryCounted;
 
   // Debts due now are deducted; long-term debt is not, which is why the field
   // is named `immediateDebts` rather than `debts`. Getting a student to
@@ -113,6 +123,7 @@ export function computeZakat(input: ZakatInput): ZakatResult {
     rate,
     zakatDue: meetsNisab ? netWealth * rate : 0,
     shortfall: meetsNisab ? 0 : Math.max(0, nisab - netWealth),
+    regularJewelleryCounted,
   };
 }
 

@@ -29,6 +29,7 @@ export type AssetCategory =
   | "cash"
   | "savings"
   | "preciousMetals"
+  | "regularJewellery"
   | "receivables"
   | "tradeGoods";
 
@@ -36,6 +37,7 @@ export const ASSET_CATEGORIES: readonly AssetCategory[] = [
   "cash",
   "savings",
   "preciousMetals",
+  "regularJewellery",
   "receivables",
   "tradeGoods",
 ];
@@ -44,6 +46,7 @@ export const CATEGORY_LABELS: Readonly<Record<AssetCategory, string>> = {
   cash: "Cash",
   savings: "Savings",
   preciousMetals: "Gold and silver",
+  regularJewellery: "Regularly worn jewellery",
   receivables: "Money owed to you",
   tradeGoods: "Stock for resale",
 };
