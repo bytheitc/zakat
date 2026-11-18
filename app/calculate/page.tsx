@@ -46,6 +46,7 @@ import { WalletForm } from "@/components/sources/WalletForm";
 import { CategoryIcon } from "@/components/sources/CategoryIcon";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { AppHeader } from "@/components/app/AppHeader";
+import { HawlReminder } from "@/components/app/HawlReminder";
 import { HelpCenter, type HelpTopic } from "@/components/app/HelpCenter";
 import { Onboarding, hasOnboarded } from "@/components/app/Onboarding";
 
@@ -293,6 +294,8 @@ function WealthCalculator({ help, currency, symbol }: { help: (t: HelpTopic) => 
             </span>
           </label>
         </Step>
+
+        <HawlReminder />
 
         <div className="flex flex-wrap items-center justify-between gap-3 px-1 text-sm text-[var(--color-ink-faint)]">
           <span>Your figures are saved in this browser as you type.</span>
