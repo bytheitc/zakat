@@ -235,3 +235,225 @@ body {
     font-size: 16px;
   }
 }
+
+.printable-zakat-statement {
+  display: none;
+}
+
+@page {
+  size: A4;
+  margin: 12mm;
+}
+
+@media print {
+  html,
+  body {
+    width: 210mm;
+    min-height: 297mm;
+    background: #fff;
+    color: #1d1230;
+    font-size: 10pt;
+  }
+
+  body {
+    padding: 0 !important;
+  }
+
+  header,
+  nav,
+  dialog,
+  .print-hide,
+  [role="tablist"] {
+    display: none !important;
+  }
+
+  main {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .printable-zakat-statement {
+    display: block;
+    width: 100%;
+    color: #1d1230;
+  }
+
+  .print-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    border-bottom: 2px solid #1d1230;
+    padding-bottom: 5mm;
+  }
+
+  .print-header h1 {
+    margin: 1mm 0 0;
+    font-family: var(--font-display);
+    font-size: 20pt;
+    line-height: 1.05;
+  }
+
+  .print-eyebrow,
+  .print-status-label {
+    margin: 0;
+    font-size: 8pt;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .print-currency {
+    margin: 0;
+    border: 1px solid #1d1230;
+    padding: 2mm 3mm;
+    font-weight: 800;
+  }
+
+  .print-disclaimer {
+    margin: 4mm 0;
+    padding: 3mm;
+    border: 1px solid #e2cdb6;
+    font-size: 9pt;
+  }
+
+  .print-status {
+    break-inside: avoid;
+    margin-bottom: 5mm;
+    padding: 4mm;
+    border: 2px solid #1d1230;
+    background: #fff1c2;
+  }
+
+  .print-status h2 {
+    margin: 2mm 0 1mm;
+    font-size: 14pt;
+  }
+
+  .print-status p:last-child {
+    margin: 0;
+  }
+
+  .print-section {
+    break-inside: avoid;
+    margin-top: 5mm;
+  }
+
+  .print-section h2 {
+    margin: 0 0 3mm;
+    border-bottom: 1px solid #1d1230;
+    padding-bottom: 1.5mm;
+    font-size: 12pt;
+  }
+
+  .print-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    margin: 0;
+    border: 1px solid #e2cdb6;
+  }
+
+  .print-summary div {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 3mm;
+    min-width: 0;
+    border-bottom: 1px solid #f0e2d2;
+    padding: 2mm 3mm;
+  }
+
+  .print-summary dt,
+  .print-summary dd {
+    margin: 0;
+  }
+
+  .print-summary dd {
+    text-align: right;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .print-summary-result {
+    grid-column: 1 / -1;
+    background: #ffd23f;
+  }
+
+  .print-capitalized {
+    text-transform: capitalize;
+  }
+
+  .print-warnings {
+    border: 1px solid #b46a00;
+    padding: 3mm;
+  }
+
+  .print-warnings p {
+    margin: 1mm 0;
+  }
+
+  .print-empty {
+    color: #5a4d68;
+  }
+
+  .print-breakdown,
+  .print-debt-list {
+    break-inside: avoid;
+  }
+
+  .print-category,
+  .print-debt-list {
+    break-inside: avoid;
+    margin-bottom: 4mm;
+  }
+
+  .print-category h3,
+  .print-debt-list h3 {
+    margin: 0 0 1.5mm;
+    font-size: 10pt;
+  }
+
+  .printable-zakat-statement table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+
+  .printable-zakat-statement th,
+  .printable-zakat-statement td {
+    border: 1px solid #e2cdb6;
+    padding: 1.5mm;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .printable-zakat-statement th {
+    background: #fdf0e1;
+  }
+
+  .printable-zakat-statement th:nth-child(2),
+  .printable-zakat-statement td:nth-child(2),
+  .printable-zakat-statement th:nth-child(3),
+  .printable-zakat-statement td:nth-child(3) {
+    width: 25%;
+    text-align: right;
+  }
+
+  .printable-zakat-statement tfoot th,
+  .printable-zakat-statement tfoot td {
+    background: #fff8ef;
+  }
+
+  .print-footer {
+    break-inside: avoid;
+    margin-top: 5mm;
+    border-top: 1px solid #1d1230;
+    padding-top: 3mm;
+    color: #5a4d68;
+    font-size: 8pt;
+  }
+
+  .print-footer p {
+    margin: 1mm 0;
+  }
+}

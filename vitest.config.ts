@@ -15,6 +15,6 @@ export default defineConfig({
     // The logic worth testing is all pure functions over plain data, so there
     // is no jsdom environment and no setup file to keep in sync.
     environment: "node",
-    include: ["lib/**/*.test.ts"],
+    include: ["lib/**/*.test.ts", "components/**/*.test.ts"],
   },
 });

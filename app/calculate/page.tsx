@@ -10,6 +10,7 @@ import {
   CircleHelp,
   Coins,
   LockKeyhole,
+  Printer,
   RotateCcw,
   Save,
   Scale,
@@ -48,6 +49,7 @@ import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { AppHeader } from "@/components/app/AppHeader";
 import { HelpCenter, type HelpTopic } from "@/components/app/HelpCenter";
 import { Onboarding, hasOnboarded } from "@/components/app/Onboarding";
+import { PrintableZakatStatement } from "@/components/PrintableZakatStatement";
 
 /** Fields start blank rather than at zero: a pre-filled 0 reads as an answer. */
 const num = (value: string) => {
@@ -198,7 +200,8 @@ function WealthCalculator({ help, currency, symbol }: { help: (t: HelpTopic) => 
   const hasHoldings = allSources.length > 0;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start">
+    <>
+    <div className="print-hide grid gap-6 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start">
       <div className="space-y-5">
         <Step n={1} title="Your bank accounts" status={imported > 0 ? "done" : "optional"} subtitle="Import statements to fill this in for you. Each account keeps its own line." onHelp={() => help("imports")}>
           <ImportDropzone currency={currency} onImport={(added) => setSources((cur) => [...cur, ...added])} />
@@ -311,8 +314,30 @@ function WealthCalculator({ help, currency, symbol }: { help: (t: HelpTopic) => 
         </div>
       </div>
 
-      <ResultPanel priced={priced} hasHoldings={hasHoldings} basis={basis} result={result} totals={totals} onHelp={help} fmt={fmt} currency={currency} />
+      <ResultPanel
+        priced={priced}
+        hasHoldings={hasHoldings}
+        basis={basis}
+        solarYear={solarYear}
+        metalPrice={basis === "gold" ? num(goldPrice) : num(silverPrice)}
+        result={result}
+        totals={totals}
+        onHelp={help}
+        fmt={fmt}
+        currency={currency}
+      />
     </div>
+    <PrintableZakatStatement
+      priced={priced}
+      basis={basis}
+      metalPrice={basis === "gold" ? num(goldPrice) : num(silverPrice)}
+      solarYear={solarYear}
+      currency={currency}
+      result={result}
+      totals={totals}
+      fmt={fmt}
+    />
+    </>
   );
 }
 
@@ -345,6 +370,8 @@ function ResultPanel({
   priced,
   hasHoldings,
   basis,
+  solarYear,
+  metalPrice,
   result,
   totals,
   onHelp,
@@ -356,6 +383,8 @@ function ResultPanel({
   priced: boolean;
   hasHoldings: boolean;
   basis: NisabBasis;
+  solarYear: boolean;
+  metalPrice: number;
   result: ReturnType<typeof computeZakat>;
   totals: ReturnType<typeof aggregate>;
   onHelp: (t: HelpTopic) => void;
@@ -474,9 +503,14 @@ function ResultPanel({
                   <p className="mt-3 text-xs text-[var(--color-ink-soft)]">The least certain figure here was {CONFIDENCE_NOTES[weakest].toLowerCase()}. Check it before you pay.</p>
                 )}
 
-                <button type="button" onClick={save} className="btn btn-primary mt-5 w-full">
-                  {saved ? <><CheckCircle2 className="size-4" /> Saved to your records</> : <><Save className="size-4" /> Save this calculation</>}
-                </button>
+                <div className="mt-5 grid gap-2 sm:grid-cols-2">
+                  <button type="button" onClick={save} className="btn btn-primary w-full">
+                    {saved ? <><CheckCircle2 className="size-4" /> Saved to your records</> : <><Save className="size-4" /> Save this calculation</>}
+                  </button>
+                  <button type="button" onClick={() => window.print()} className="btn btn-ghost w-full">
+                    <Printer className="size-4" /> Print statement
+                  </button>
+                </div>
                 <p className="mt-2 text-center text-xs text-[var(--color-ink-faint)]">
                   {account.email ? (
                     <Link href="/account" className="hover:underline">See your saved calculations</Link>
